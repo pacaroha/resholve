@@ -121,6 +121,7 @@ rec {
       inherit name text;
       executable = true;
       checkPhase = ''
+        runHook preCheck
         ${(phraseContextForPWD (
             phraseInvocation name (
               partialSolution // {
@@ -131,6 +132,8 @@ rec {
         )}
       '' + lib.optionalString (partialSolution.interpreter != "none") ''
         ${partialSolution.interpreter} -n $out
+      '' + ''
+        runHook postCheck
       '';
     };
   writeScriptBin = name: partialSolution: text:
@@ -139,6 +142,7 @@ rec {
       executable = true;
       destination = "/bin/${name}";
       checkPhase = ''
+        runHook preCheck
         ${phraseContextForOut (
             phraseInvocation name (
               partialSolution // {
@@ -149,6 +153,8 @@ rec {
         }
       '' + lib.optionalString (partialSolution.interpreter != "none") ''
         ${partialSolution.interpreter} -n $out/bin/${name}
+      '' + ''
+        runHook postCheck
       '';
     };
   mkDerivation = { pname

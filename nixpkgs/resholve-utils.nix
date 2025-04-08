@@ -121,14 +121,14 @@ rec {
       inherit name text;
       executable = true;
       checkPhase = ''
-         ${(phraseContextForPWD (
-             phraseInvocation name (
-               partialSolution // {
-                 scripts = [ "${placeholder "out"}" ];
-               }
-             )
-           )
-         )}
+        ${(phraseContextForPWD (
+            phraseInvocation name (
+              partialSolution // {
+                scripts = [ "${placeholder "out"}" ];
+              }
+            )
+          )
+        )}
       '' + lib.optionalString (partialSolution.interpreter != "none") ''
         ${partialSolution.interpreter} -n $out
       '';

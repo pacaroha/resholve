@@ -154,15 +154,23 @@ rec {
   writeShellApplication =
     { name
     , text
-    , runtimeInputs ? [ ]
+    , runtimeInputs ? inputs
     , checkPhase ? null
+    , inputs ? [  ]
+    , execer ? [  ]
+    , interpreter ? runtimeShell
     }:
+    let
+      partialSolution = {
+        inherit inputs execer interpreter;
+      };
+    in
     writeTextFile {
       inherit name;
       executable = true;
       destination = "/bin/${name}";
       text = ''
-        #!${runtimeShell}
+        #!${interpreter}
         set -o errexit
         set -o nounset
         set -o pipefail

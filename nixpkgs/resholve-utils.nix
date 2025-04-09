@@ -1,4 +1,4 @@
-{ lib, stdenv, resholve, binlore, writeTextFile }:
+{ lib, stdenv, resholve, binlore, writeTextFile, runtimeShell }:
 
 rec {
   /* These functions break up the work of partially validating the
@@ -121,7 +121,6 @@ rec {
       inherit name text;
       executable = true;
       checkPhase = ''
-        runHook preCheck
         ${(phraseContextForPWD (
             phraseInvocation name (
               partialSolution // {
@@ -132,10 +131,7 @@ rec {
         )}
       '' + lib.optionalString (partialSolution.interpreter != "none") ''
         ${partialSolution.interpreter} -n $out
-      '' + ''
-        runHook postCheck
       '';
-      inherit (partialSolution) preCheck postCheck;
     };
   writeScriptBin = name: partialSolution: text:
     writeTextFile rec {
@@ -143,7 +139,6 @@ rec {
       executable = true;
       destination = "/bin/${name}";
       checkPhase = ''
-        runHook preCheck
         ${phraseContextForOut (
             phraseInvocation name (
               partialSolution // {
@@ -154,10 +149,52 @@ rec {
         }
       '' + lib.optionalString (partialSolution.interpreter != "none") ''
         ${partialSolution.interpreter} -n $out/bin/${name}
-      '' + ''
-        runHook postCheck
       '';
-      inherit (partialSolution) preCheck postCheck;
+    };
+  writeShellApplication =
+    { name
+    , text
+    , runtimeInputs ? [ ]
+    , checkPhase ? null
+    }:
+    writeTextFile {
+      inherit name;
+      executable = true;
+      destination = "/bin/${name}";
+      text = ''
+        #!${runtimeShell}
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        export PATH="${lib.makeBinPath runtimeInputs}:$PATH"
+
+        ${text}
+      '';
+
+      checkPhase =
+        if checkPhase == null then ''
+          runHook preCheck
+          ${stdenv.shellDryRun} "$target"
+          ${shellcheck}/bin/shellcheck "$target"
+
+          ${phraseContextForOut (
+              phraseInvocation name (
+                partialSolution // {
+                  scripts = [ "bin/${name}" ];
+                }
+              )
+            )
+          }
+        '' +
+        (lib.optionalString (partialSolution.interpreter != "none") ''
+          ${partialSolution.interpreter} -n $out/bin/${name}
+        '') + ''
+          runHook postCheck
+        ''
+        else checkPhase;
+
+      meta.mainProgram = name;
     };
   mkDerivation = { pname
     , src

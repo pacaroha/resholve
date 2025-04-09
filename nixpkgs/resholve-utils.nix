@@ -135,6 +135,7 @@ rec {
       '' + ''
         runHook postCheck
       '';
+      inherit (partialSolution) preCheck postCheck;
     };
   writeScriptBin = name: partialSolution: text:
     writeTextFile rec {
@@ -156,6 +157,7 @@ rec {
       '' + ''
         runHook postCheck
       '';
+      inherit (partialSolution) preCheck postCheck;
     };
   mkDerivation = { pname
     , src

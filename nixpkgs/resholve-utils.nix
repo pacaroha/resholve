@@ -1,4 +1,4 @@
-{ lib, stdenv, resholve, binlore, writeTextFile, runtimeShell }:
+{ lib, stdenv, resholve, binlore, writeTextFile, runtimeShell, shellcheck }:
 
 rec {
   /* These functions break up the work of partially validating the
